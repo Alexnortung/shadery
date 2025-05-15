@@ -1,21 +1,21 @@
--- Create a trigger that generates fields for the game
-create or replace function generate_game_fields()
-returns trigger as $$
-declare
-    x int;
-    y int;
-begin
-    for x in 0..new.size_x - 1 loop
-        for y in 0..new.size_y - 1 loop
-            insert into game_fields (game_id, field_value, x, y)
-            values (new.id, null, x, y);
-        end loop;
-    end loop;
-
-    return new;
-end;
-$$ language plpgsql;
-create trigger generate_game_fields_trigger
-after insert on games
-for each row
-execute procedure generate_game_fields();
+-- -- Create a trigger that generates fields for the game
+-- create or replace function generate_game_fields()
+-- returns trigger as $$
+-- declare
+--     x int;
+--     y int;
+-- begin
+--     for x in 0..new.size_x - 1 loop
+--         for y in 0..new.size_y - 1 loop
+--             insert into game_fields (game_id, field_value, x, y)
+--             values (new.id, null, x, y);
+--         end loop;
+--     end loop;
+--
+--     return new;
+-- end;
+-- $$ language plpgsql;
+-- create trigger generate_game_fields_trigger
+-- after insert on games
+-- for each row
+-- execute procedure generate_game_fields();

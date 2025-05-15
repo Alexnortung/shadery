@@ -98,43 +98,43 @@ begin
 end;
 $$;
 
-create or replace function game_get_players_current_fields_ids(
-    player_id bigint
+CREATE OR REPLACE FUNCTION game_get_players_current_fields_ids(
+    player_id BIGINT
 )
-returns setof bigint
-language plpgsql
-as $$
-declare
-    initial_pos_x int;
-    initial_pos_y int;
-begin
-    -- return query
-    -- select f.id
-    -- from game_fields f
-    select p.position_x into initial_pos_x,
-        p.position_y into initial_pos_y
-    from game_players p
-    where p.player_id = player_id;
+RETURNS SETOF BIGINT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    the_game_id BIGINT;
+    initial_pos_x INT;
+    initial_pos_y INT;
+BEGIN
+    -- Get initial player position
+    SELECT p.game_id, p.position_x, p.position_y
+    INTO the_game_id, initial_pos_x, initial_pos_y
+    FROM game_players p
+    WHERE p.id = player_id;
 
-    with recursive
-        fields as (
-            select f.* from game_fields f
-            where f.x = initial_pos_x
-            and f.y = initial_pos_y
-            union
-            select f.* from game_fields f
-            where f.value = fields.value
-            and (
-                (f.x = fields.x + 1 and f.y = fields.y)
-                or (f.x = fields.x - 1 and f.y = fields.y)
-                or (f.x = fields.x and f.y = fields.y + 1)
-                or (f.x = fields.x and f.y = fields.y - 1)
-            )
+    -- Recursive search for connected fields with same value
+    RETURN QUERY
+    WITH RECURSIVE fields AS (
+        SELECT f.id, f.x, f.y, f.field_value
+        FROM game_fields f
+        WHERE f.game_id = the_game_id AND f.x = initial_pos_x AND f.y = initial_pos_y
+
+        UNION
+
+        SELECT f2.id, f2.x, f2.y, f2.field_value
+        FROM game_fields f2
+        INNER JOIN fields f1 ON f2.game_id = the_game_id AND f2.field_value = f1.field_value AND (
+            (f2.x = f1.x + 1 AND f2.y = f1.y) OR
+            (f2.x = f1.x - 1 AND f2.y = f1.y) OR
+            (f2.x = f1.x AND f2.y = f1.y + 1) OR
+            (f2.x = f1.x AND f2.y = f1.y - 1)
         )
     )
-    select f.id as field_id
-    from fields f
-end;
+    SELECT id FROM fields;
+END;
 $$;
 
 create or replace function game_play_logic(
