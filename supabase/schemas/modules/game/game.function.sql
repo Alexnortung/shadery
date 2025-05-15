@@ -98,6 +98,45 @@ begin
 end;
 $$;
 
+create or replace function game_get_players_current_fields_ids(
+    player_id bigint
+)
+returns setof bigint
+language plpgsql
+as $$
+declare
+    initial_pos_x int;
+    initial_pos_y int;
+begin
+    -- return query
+    -- select f.id
+    -- from game_fields f
+    select p.position_x into initial_pos_x,
+        p.position_y into initial_pos_y
+    from game_players p
+    where p.player_id = player_id;
+
+    with recursive
+        fields as (
+            select f.* from game_fields f
+            where f.x = initial_pos_x
+            and f.y = initial_pos_y
+            union
+            select f.* from game_fields f
+            where f.value = fields.value
+            and (
+                (f.x = fields.x + 1 and f.y = fields.y)
+                or (f.x = fields.x - 1 and f.y = fields.y)
+                or (f.x = fields.x and f.y = fields.y + 1)
+                or (f.x = fields.x and f.y = fields.y - 1)
+            )
+        )
+    )
+    select f.id as field_id
+    from fields f
+end;
+$$;
+
 create or replace function game_play_logic(
     game_id bigint,
     player_number int,
