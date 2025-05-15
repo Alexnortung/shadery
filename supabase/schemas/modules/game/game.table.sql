@@ -12,7 +12,9 @@ create table "game_players" (
     "game_id" bigint references games(id) on delete cascade,
     "position_x" int not null,
     "position_y" int not null,
-    "player_number" int not null
+    "player_number" int not null,
+    constraint "uq_player_position" unique ("game_id", "position_x", "position_y"),
+    constraint "uq_player_number" unique ("game_id", "player_number")
 );
 
 create table "game_fields" (

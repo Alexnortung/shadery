@@ -1,7 +1,7 @@
 
 -- A function which gets the game player based on the game id
 create or replace function game_get_player(
-    game_id bigint
+    the_game_id bigint
 )
 returns game_players
 language plpgsql
@@ -12,7 +12,7 @@ begin
         from game_players p
         inner join auth_game ag
             on p.player_id = ag.player_id
-        where game_id = game_id
+        where p.game_id = the_game_id
         and ag.auth_uid = auth.uid()
     );
 end;
@@ -20,7 +20,7 @@ $$;
 
 -- A security definer function which allows a user to make a play
 create or replace function game_player_play(
-    game_id bigint,
+    the_game_id bigint,
     value int
 )
 returns void
@@ -34,7 +34,7 @@ begin
     -- Get the game
     select g.* into game
     from games g
-    where g.id = game_id;
+    where g.id = the_game_id;
 
     if not found then
         raise exception 'Game not found';
@@ -42,7 +42,7 @@ begin
 
     -- Get the player
     select * into player
-    from game_get_player(game_id);
+    from game_get_player(the_game_id);
     
     if not found then
         raise exception 'Player not found';
@@ -65,7 +65,7 @@ end;
 $$;
 
 create or replace function game_set_next_player(
-    game_id bigint,
+    the_game_id bigint,
     player_number int
 )
 returns void
@@ -77,8 +77,8 @@ begin
     -- get the next player
     select p.player_number into next_player
     from game_players p
-    where p.game_id = game_id
-    and p.player_number > player_number
+    where p.game_id = the_game_id
+    and p.player_number > game_set_next_player.player_number
     order by p.player_number asc
     limit 1;
 
@@ -86,15 +86,15 @@ begin
         -- get the first player instead
         select p.player_number into next_player
         from game_players p
-        where p.game_id = game_id
+        where p.game_id = the_game_id
         order by p.player_number asc
         limit 1;
     end if;
 
     -- update the current player number in the game table
-    update game g
-    set current_player = next_player
-    where g.id = game_id;
+    update games g
+    set current_player_number = next_player
+    where g.id = the_game_id;
 end;
 $$;
 
@@ -138,7 +138,7 @@ END;
 $$;
 
 create or replace function game_play_logic(
-    game_id bigint,
+    the_game_id bigint,
     player_number int,
     value int
 )
@@ -146,10 +146,23 @@ returns void
 language plpgsql
 as $$
 declare
-    next_player int;
+    player_id bigint;
 begin
-    -- TODO: implement play logic
+    -- update the game fields based on the player's fields
+    select p.id into player_id
+    from game_players p
+    where p.game_id = the_game_id
+    and p.player_number = game_play_logic.player_number;
+
+    update game_fields f
+    set field_value = value
+    where f.id in (
+        select * from game_get_players_current_fields_ids(player_id)
+    );
+    
     -- for now, just upate the current player turn
-    perform set_next_player(game_id, player_number);
+    perform game_set_next_player(the_game_id, player_number);
+
+    -- TODO: check if a player has won
 end;
 $$;
