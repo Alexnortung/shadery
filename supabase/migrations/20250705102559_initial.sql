@@ -4,11 +4,23 @@ create sequence "public"."game_players_id_seq";
 
 create sequence "public"."games_id_seq";
 
+create sequence "public"."lobby_players_id_seq";
+
 create table "public"."auth_game" (
-    "auth_uid" uuid,
-    "player_id" bigint
+    "auth_uid" uuid not null,
+    "player_id" bigint not null
 );
 
+
+alter table "public"."auth_game" enable row level security;
+
+create table "public"."auth_lobby" (
+    "auth_uid" uuid not null,
+    "player_id" bigint not null
+);
+
+
+alter table "public"."auth_lobby" enable row level security;
 
 create table "public"."game_fields" (
     "id" bigint not null default nextval('game_fields_id_seq'::regclass),
@@ -44,11 +56,35 @@ create table "public"."games" (
 
 alter table "public"."games" enable row level security;
 
+create table "public"."lobbies" (
+    "id" uuid not null default gen_random_uuid(),
+    "created_at" timestamp with time zone not null default now(),
+    "ended_at" timestamp with time zone
+);
+
+
+alter table "public"."lobbies" enable row level security;
+
+create table "public"."lobby_players" (
+    "id" bigint not null default nextval('lobby_players_id_seq'::regclass),
+    "lobby_id" uuid,
+    "player_number" integer not null
+);
+
+
+alter table "public"."lobby_players" enable row level security;
+
 alter sequence "public"."game_fields_id_seq" owned by "public"."game_fields"."id";
 
 alter sequence "public"."game_players_id_seq" owned by "public"."game_players"."id";
 
 alter sequence "public"."games_id_seq" owned by "public"."games"."id";
+
+alter sequence "public"."lobby_players_id_seq" owned by "public"."lobby_players"."id";
+
+CREATE UNIQUE INDEX auth_game_player_id_key ON public.auth_game USING btree (player_id);
+
+CREATE UNIQUE INDEX auth_lobby_player_id_key ON public.auth_lobby USING btree (player_id);
 
 CREATE UNIQUE INDEX game_fields_pkey ON public.game_fields USING btree (id);
 
@@ -56,7 +92,13 @@ CREATE UNIQUE INDEX game_players_pkey ON public.game_players USING btree (id);
 
 CREATE UNIQUE INDEX games_pkey ON public.games USING btree (id);
 
+CREATE UNIQUE INDEX lobbies_pkey ON public.lobbies USING btree (id);
+
+CREATE UNIQUE INDEX lobby_players_pkey ON public.lobby_players USING btree (id);
+
 CREATE UNIQUE INDEX uq_field_position ON public.game_fields USING btree (game_id, x, y);
+
+CREATE UNIQUE INDEX uq_lobby_players_number ON public.lobby_players USING btree (lobby_id, player_number);
 
 CREATE UNIQUE INDEX uq_player_number ON public.game_players USING btree (game_id, player_number);
 
@@ -68,9 +110,21 @@ alter table "public"."game_players" add constraint "game_players_pkey" PRIMARY K
 
 alter table "public"."games" add constraint "games_pkey" PRIMARY KEY using index "games_pkey";
 
+alter table "public"."lobbies" add constraint "lobbies_pkey" PRIMARY KEY using index "lobbies_pkey";
+
+alter table "public"."lobby_players" add constraint "lobby_players_pkey" PRIMARY KEY using index "lobby_players_pkey";
+
 alter table "public"."auth_game" add constraint "auth_game_player_id_fkey" FOREIGN KEY (player_id) REFERENCES game_players(id) ON DELETE CASCADE not valid;
 
 alter table "public"."auth_game" validate constraint "auth_game_player_id_fkey";
+
+alter table "public"."auth_game" add constraint "auth_game_player_id_key" UNIQUE using index "auth_game_player_id_key";
+
+alter table "public"."auth_lobby" add constraint "auth_lobby_player_id_fkey" FOREIGN KEY (player_id) REFERENCES lobby_players(id) ON DELETE CASCADE not valid;
+
+alter table "public"."auth_lobby" validate constraint "auth_lobby_player_id_fkey";
+
+alter table "public"."auth_lobby" add constraint "auth_lobby_player_id_key" UNIQUE using index "auth_lobby_player_id_key";
 
 alter table "public"."game_fields" add constraint "game_fields_game_id_fkey" FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE not valid;
 
@@ -85,6 +139,12 @@ alter table "public"."game_players" validate constraint "game_players_game_id_fk
 alter table "public"."game_players" add constraint "uq_player_number" UNIQUE using index "uq_player_number";
 
 alter table "public"."game_players" add constraint "uq_player_position" UNIQUE using index "uq_player_position";
+
+alter table "public"."lobby_players" add constraint "lobby_players_lobby_id_fkey" FOREIGN KEY (lobby_id) REFERENCES lobbies(id) ON DELETE CASCADE not valid;
+
+alter table "public"."lobby_players" validate constraint "lobby_players_lobby_id_fkey";
+
+alter table "public"."lobby_players" add constraint "uq_lobby_players_number" UNIQUE using index "uq_lobby_players_number";
 
 set check_function_bodies = off;
 
@@ -224,7 +284,7 @@ begin
     select p.player_number into next_player
     from game_players p
     where p.game_id = the_game_id
-    and p.player_number > player_number
+    and p.player_number > game_set_next_player.player_number
     order by p.player_number asc
     limit 1;
 
@@ -238,9 +298,47 @@ begin
     end if;
 
     -- update the current player number in the game table
-    update game g
-    set current_player = next_player
+    update games g
+    set current_player_number = next_player
     where g.id = the_game_id;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.lobby_player_join(the_lobby_id bigint)
+ RETURNS bigint
+ LANGUAGE plpgsql
+AS $function$
+declare
+    player lobby_players%rowtype;
+    lobby lobbies%rowtype;
+    next_player_number int;
+begin
+    -- Get the lobby
+    select l.* into lobby
+    from lobbies l
+    where l.id = the_lobby_id;
+
+    if not found then
+        raise exception 'Lobby not found';
+    end if;
+
+    -- Check if the lobby is active
+    if lobby.ended_at is not null then
+        raise exception 'Lobby has ended';
+    end if;
+
+    -- Get the next player number
+    select coalesce(max(lp.player_number) + 1, 0) into next_player_number
+    from lobby_players lp
+    where lp.lobby_id = the_lobby_id;
+
+    -- Create the player
+    insert into lobby_players (lobby_id, player_number)
+    values (the_lobby_id, next_player_number)
+    returning * into player;
+
+    return player.id;
 end;
 $function$
 ;
@@ -286,6 +384,48 @@ grant trigger on table "public"."auth_game" to "service_role";
 grant truncate on table "public"."auth_game" to "service_role";
 
 grant update on table "public"."auth_game" to "service_role";
+
+grant delete on table "public"."auth_lobby" to "anon";
+
+grant insert on table "public"."auth_lobby" to "anon";
+
+grant references on table "public"."auth_lobby" to "anon";
+
+grant select on table "public"."auth_lobby" to "anon";
+
+grant trigger on table "public"."auth_lobby" to "anon";
+
+grant truncate on table "public"."auth_lobby" to "anon";
+
+grant update on table "public"."auth_lobby" to "anon";
+
+grant delete on table "public"."auth_lobby" to "authenticated";
+
+grant insert on table "public"."auth_lobby" to "authenticated";
+
+grant references on table "public"."auth_lobby" to "authenticated";
+
+grant select on table "public"."auth_lobby" to "authenticated";
+
+grant trigger on table "public"."auth_lobby" to "authenticated";
+
+grant truncate on table "public"."auth_lobby" to "authenticated";
+
+grant update on table "public"."auth_lobby" to "authenticated";
+
+grant delete on table "public"."auth_lobby" to "service_role";
+
+grant insert on table "public"."auth_lobby" to "service_role";
+
+grant references on table "public"."auth_lobby" to "service_role";
+
+grant select on table "public"."auth_lobby" to "service_role";
+
+grant trigger on table "public"."auth_lobby" to "service_role";
+
+grant truncate on table "public"."auth_lobby" to "service_role";
+
+grant update on table "public"."auth_lobby" to "service_role";
 
 grant delete on table "public"."game_fields" to "anon";
 
@@ -412,5 +552,119 @@ grant trigger on table "public"."games" to "service_role";
 grant truncate on table "public"."games" to "service_role";
 
 grant update on table "public"."games" to "service_role";
+
+grant delete on table "public"."lobbies" to "anon";
+
+grant insert on table "public"."lobbies" to "anon";
+
+grant references on table "public"."lobbies" to "anon";
+
+grant select on table "public"."lobbies" to "anon";
+
+grant trigger on table "public"."lobbies" to "anon";
+
+grant truncate on table "public"."lobbies" to "anon";
+
+grant update on table "public"."lobbies" to "anon";
+
+grant delete on table "public"."lobbies" to "authenticated";
+
+grant insert on table "public"."lobbies" to "authenticated";
+
+grant references on table "public"."lobbies" to "authenticated";
+
+grant select on table "public"."lobbies" to "authenticated";
+
+grant trigger on table "public"."lobbies" to "authenticated";
+
+grant truncate on table "public"."lobbies" to "authenticated";
+
+grant update on table "public"."lobbies" to "authenticated";
+
+grant delete on table "public"."lobbies" to "service_role";
+
+grant insert on table "public"."lobbies" to "service_role";
+
+grant references on table "public"."lobbies" to "service_role";
+
+grant select on table "public"."lobbies" to "service_role";
+
+grant trigger on table "public"."lobbies" to "service_role";
+
+grant truncate on table "public"."lobbies" to "service_role";
+
+grant update on table "public"."lobbies" to "service_role";
+
+grant delete on table "public"."lobby_players" to "anon";
+
+grant insert on table "public"."lobby_players" to "anon";
+
+grant references on table "public"."lobby_players" to "anon";
+
+grant select on table "public"."lobby_players" to "anon";
+
+grant trigger on table "public"."lobby_players" to "anon";
+
+grant truncate on table "public"."lobby_players" to "anon";
+
+grant update on table "public"."lobby_players" to "anon";
+
+grant delete on table "public"."lobby_players" to "authenticated";
+
+grant insert on table "public"."lobby_players" to "authenticated";
+
+grant references on table "public"."lobby_players" to "authenticated";
+
+grant select on table "public"."lobby_players" to "authenticated";
+
+grant trigger on table "public"."lobby_players" to "authenticated";
+
+grant truncate on table "public"."lobby_players" to "authenticated";
+
+grant update on table "public"."lobby_players" to "authenticated";
+
+grant delete on table "public"."lobby_players" to "service_role";
+
+grant insert on table "public"."lobby_players" to "service_role";
+
+grant references on table "public"."lobby_players" to "service_role";
+
+grant select on table "public"."lobby_players" to "service_role";
+
+grant trigger on table "public"."lobby_players" to "service_role";
+
+grant truncate on table "public"."lobby_players" to "service_role";
+
+grant update on table "public"."lobby_players" to "service_role";
+
+create policy "Allow users to create lobbies"
+on "public"."lobbies"
+as permissive
+for insert
+to public
+with check (true);
+
+
+create policy "Allow users to see their lobbies"
+on "public"."lobbies"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM (auth_lobby al
+     JOIN lobby_players p ON ((al.player_id = p.id)))
+  WHERE ((al.auth_uid = auth.uid()) AND (p.lobby_id = lobbies.id)))));
+
+
+create policy "Allow users to see players in their lobbies"
+on "public"."lobby_players"
+as permissive
+for select
+to public
+using ((EXISTS ( SELECT 1
+   FROM (auth_lobby al
+     JOIN lobby_players p ON ((al.player_id = p.id)))
+  WHERE ((al.auth_uid = auth.uid()) AND (p.lobby_id = lobby_players.lobby_id)))));
+
 
 

@@ -4,6 +4,6 @@ create table auth_game (
     player_id bigint
         references game_players(id) on delete cascade
         not null
-        unique,
+        unique
 );
 alter table "auth_game" enable row level security;

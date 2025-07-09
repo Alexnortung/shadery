@@ -18,8 +18,20 @@ export default async function Page() {
 	// If not show a page where they can create a lobby or join one
 
 	const createLobby = async () => {
+		"use server";
 		// await supabase.rpc("");
-		supabase.from("lobbies").insert({});
+		const supabase = await createClient();
+		const newLobby = await supabase
+			.from("lobbies")
+			.insert({})
+			.select("id")
+			.single();
+		const lobbyId = newLobby.data?.id;
+		if (!lobbyId) {
+			console.error("Failed to create lobby", newLobby.error);
+			throw new Error("Failed to create lobby");
+		}
+		redirect(`/lobby/${lobbyId}`);
 	};
 
 	return (

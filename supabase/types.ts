@@ -36,23 +36,46 @@ export type Database = {
     Tables: {
       auth_game: {
         Row: {
-          auth_uid: string | null
-          player_id: number | null
+          auth_uid: string
+          player_id: number
         }
         Insert: {
-          auth_uid?: string | null
-          player_id?: number | null
+          auth_uid: string
+          player_id: number
         }
         Update: {
-          auth_uid?: string | null
-          player_id?: number | null
+          auth_uid?: string
+          player_id?: number
         }
         Relationships: [
           {
             foreignKeyName: "auth_game_player_id_fkey"
             columns: ["player_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "game_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auth_lobby: {
+        Row: {
+          auth_uid: string
+          player_id: number
+        }
+        Insert: {
+          auth_uid: string
+          player_id: number
+        }
+        Update: {
+          auth_uid?: string
+          player_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auth_lobby_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "lobby_players"
             referencedColumns: ["id"]
           },
         ]
@@ -62,22 +85,22 @@ export type Database = {
           field_value: number | null
           game_id: number | null
           id: number
-          x: number | null
-          y: number | null
+          x: number
+          y: number
         }
         Insert: {
           field_value?: number | null
           game_id?: number | null
           id?: number
-          x?: number | null
-          y?: number | null
+          x: number
+          y: number
         }
         Update: {
           field_value?: number | null
           game_id?: number | null
           id?: number
-          x?: number | null
-          y?: number | null
+          x?: number
+          y?: number
         }
         Relationships: [
           {
@@ -94,22 +117,22 @@ export type Database = {
           game_id: number | null
           id: number
           player_number: number
-          position_x: number | null
-          position_y: number | null
+          position_x: number
+          position_y: number
         }
         Insert: {
           game_id?: number | null
           id?: number
           player_number: number
-          position_x?: number | null
-          position_y?: number | null
+          position_x: number
+          position_y: number
         }
         Update: {
           game_id?: number | null
           id?: number
           player_number?: number
-          position_x?: number | null
-          position_y?: number | null
+          position_x?: number
+          position_y?: number
         }
         Relationships: [
           {
@@ -123,24 +146,24 @@ export type Database = {
       }
       games: {
         Row: {
-          created_at: string | null
-          current_player_number: number | null
+          created_at: string
+          current_player_number: number
           ended_at: string | null
           id: number
           size_x: number
           size_y: number
         }
         Insert: {
-          created_at?: string | null
-          current_player_number?: number | null
+          created_at?: string
+          current_player_number: number
           ended_at?: string | null
           id?: number
           size_x: number
           size_y: number
         }
         Update: {
-          created_at?: string | null
-          current_player_number?: number | null
+          created_at?: string
+          current_player_number?: number
           ended_at?: string | null
           id?: number
           size_x?: number
@@ -148,32 +171,84 @@ export type Database = {
         }
         Relationships: []
       }
+      lobbies: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      lobby_players: {
+        Row: {
+          id: number
+          lobby_id: string | null
+          player_number: number
+        }
+        Insert: {
+          id?: number
+          lobby_id?: string | null
+          player_number: number
+        }
+        Update: {
+          id?: number
+          lobby_id?: string | null
+          player_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lobby_players_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "lobbies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       game_get_player: {
-        Args: { game_id: number }
+        Args: { the_game_id: number }
         Returns: {
           game_id: number | null
           id: number
           player_number: number
-          position_x: number | null
-          position_y: number | null
+          position_x: number
+          position_y: number
         }
       }
+      game_get_players_current_fields_ids: {
+        Args: { player_id: number }
+        Returns: number[]
+      }
       game_play_logic: {
-        Args: { game_id: number; player_number: number; value: number }
+        Args: { the_game_id: number; player_number: number; value: number }
         Returns: undefined
       }
       game_player_play: {
-        Args: { game_id: number; value: number }
+        Args: { the_game_id: number; value: number }
         Returns: undefined
       }
       game_set_next_player: {
-        Args: { game_id: number; player_number: number }
+        Args: { the_game_id: number; player_number: number }
         Returns: undefined
+      }
+      lobby_player_join: {
+        Args: { the_lobby_id: number }
+        Returns: number
       }
     }
     Enums: {

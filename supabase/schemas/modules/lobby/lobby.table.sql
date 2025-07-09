@@ -6,7 +6,7 @@ create table "lobbies" (
 
 create table "lobby_players" (
     "id" bigserial primary key,
-    "lobby_id" bigint references lobbies(id) on delete cascade,
+    "lobby_id" uuid references lobbies(id) on delete cascade,
     "player_number" int not null,
-    constraint "uq_player_number" unique ("lobby_id", "player_number")
+    constraint "uq_lobby_players_number" unique ("lobby_id", "player_number")
 );
