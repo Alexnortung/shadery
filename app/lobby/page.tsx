@@ -21,16 +21,12 @@ export default async function Page() {
 		"use server";
 		// await supabase.rpc("");
 		const supabase = await createClient();
-		const newLobby = await supabase
-			.from("lobbies")
-			.insert({})
-			.select("id")
-			.single();
-		const lobbyId = newLobby.data?.id;
-		if (!lobbyId) {
-			console.error("Failed to create lobby", newLobby.error);
-			throw new Error("Failed to create lobby");
+		const lobbyIdResponse = await supabase.rpc("user_create_lobby");
+		if (lobbyIdResponse.error) {
+			console.error("Error creating lobby:", lobbyIdResponse.error);
+			return;
 		}
+		const lobbyId = lobbyIdResponse.data;
 		redirect(`/lobby/${lobbyId}`);
 	};
 

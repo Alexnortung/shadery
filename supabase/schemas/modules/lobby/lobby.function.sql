@@ -1,8 +1,8 @@
 create or replace function lobby_player_join(
-    the_lobby_id bigint
+    the_lobby_id lobbies.id%type
 )
 -- returns the new player id
-returns bigint
+returns lobby_players.id%type
 language plpgsql
 as $$
 declare
@@ -38,16 +38,18 @@ begin
 end;
 $$;
 
-CREATE OR REPLACE FUNCTION get_user_lobby_ids()
-RETURNS SETOF uuid -- Or integer, whatever your lobby_id type is
-LANGUAGE plpgsql
-SECURITY DEFINER -- Essential: This function will run with definer's rights, bypassing RLS on underlying tables for THIS function's query only.
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT lp.lobby_id
-  FROM lobby_players lp
-    JOIN auth_lobby al ON al.player_id = lp.id
-    WHERE al.auth_uid = auth.uid();
-END;
+
+create or replace function lobby_player_leave(
+    the_lobby_id lobbies.id%type,
+    the_player_id lobby_players.id%type
+)
+returns void
+language plpgsql
+as $$
+begin
+    -- Currently we just delete the player entry. I am not sure if this needs to be different for auditing.
+    delete from lobby_players
+    where id = the_player_id
+    and lobby_id = the_lobby_id
+end;
 $$;

@@ -246,8 +246,20 @@ export type Database = {
         Args: { the_game_id: number; player_number: number }
         Returns: undefined
       }
+      get_user_lobby_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       lobby_player_join: {
-        Args: { the_lobby_id: number }
+        Args: { the_lobby_id: string }
+        Returns: number
+      }
+      user_create_lobby: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      user_join_lobby: {
+        Args: { the_lobby_id: string }
         Returns: number
       }
     }
