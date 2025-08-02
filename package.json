@@ -5,6 +5,7 @@
 		"build": "next build",
 		"start": "next start",
 		"supabase": "supabase",
+		"supabase:test": "supabase test db",
 		"supabase:migration:create": "supabase db diff --use-pg-schema",
 		"supabase:types": "supabase gen types --local > supabase/types.ts"
 	},

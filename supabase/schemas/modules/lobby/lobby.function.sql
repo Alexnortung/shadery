@@ -50,6 +50,6 @@ begin
     -- Currently we just delete the player entry. I am not sure if this needs to be different for auditing.
     delete from lobby_players
     where id = the_player_id
-    and lobby_id = the_lobby_id
+    and lobby_id = the_lobby_id;
 end;
 $$;
