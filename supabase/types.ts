@@ -189,6 +189,36 @@ export type Database = {
         }
         Relationships: []
       }
+      lobby_game: {
+        Row: {
+          game_id: number
+          lobby_id: string
+        }
+        Insert: {
+          game_id: number
+          lobby_id: string
+        }
+        Update: {
+          game_id?: number
+          lobby_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lobby_game_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: true
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lobby_game_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: true
+            referencedRelation: "lobbies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lobby_players: {
         Row: {
           id: number
@@ -220,16 +250,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      game_get_player: {
-        Args: { the_game_id: number }
-        Returns: {
-          game_id: number | null
-          id: number
-          player_number: number
-          position_x: number
-          position_y: number
-        }
-      }
       game_get_players_current_fields_ids: {
         Args: { player_id: number }
         Returns: number[]
@@ -238,12 +258,17 @@ export type Database = {
         Args: { the_game_id: number; player_number: number; value: number }
         Returns: undefined
       }
-      game_player_play: {
-        Args: { the_game_id: number; value: number }
-        Returns: undefined
-      }
       game_set_next_player: {
         Args: { the_game_id: number; player_number: number }
+        Returns: undefined
+      }
+      generate_board: {
+        Args: {
+          the_game_id: number
+          size_x: number
+          size_y: number
+          num_field_values: number
+        }
         Returns: undefined
       }
       get_user_lobby_ids: {
@@ -254,11 +279,37 @@ export type Database = {
         Args: { the_lobby_id: string }
         Returns: number
       }
+      lobby_player_leave: {
+        Args: { the_lobby_id: string; the_player_id: number }
+        Returns: undefined
+      }
       user_create_lobby: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      user_game_player_play: {
+        Args: { the_game_id: number; value: number }
+        Returns: undefined
+      }
+      user_get_game_player: {
+        Args: { the_game_id: number }
+        Returns: {
+          game_id: number | null
+          id: number
+          player_number: number
+          position_x: number
+          position_y: number
+        }
+      }
       user_join_lobby: {
+        Args: { the_lobby_id: string }
+        Returns: number
+      }
+      user_leave_lobby: {
+        Args: { the_lobby_id: string }
+        Returns: undefined
+      }
+      user_lobby_start_game: {
         Args: { the_lobby_id: string }
         Returns: number
       }

@@ -12,9 +12,9 @@ select is_empty(
     'Game fields should not be generated yet'
 );
 
--- select generate_board(:'game_id', 10, 10, 10);
+-- select game_generate_board(:'game_id', 10, 10, 10);
 select lives_ok(
-    'SELECT generate_board(' || quote_literal(:'game_id') || ', 100, 100, 4)',
+    'SELECT game_generate_board(' || quote_literal(:'game_id') || '::bigint, 100, 100, 4)',
     'Game board should be generated successfully'
 );
 

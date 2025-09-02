@@ -2,7 +2,7 @@ create table "games" (
     "id" bigserial primary key,
     "size_x" int not null,
     "size_y" int not null,
-    "current_player_number" int not null,
+    "current_player_number" int not null default 0,
     "ended_at" timestamp with time zone,
     "created_at" timestamp with time zone not null default now()
 );

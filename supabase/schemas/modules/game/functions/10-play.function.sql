@@ -9,16 +9,16 @@ declare
     next_player_number game_players.player_number%type;
 begin
     -- get the next player
-    select p.player_number into next_player
+    select p.player_number into next_player_number
     from game_players p
     where p.game_id = the_game_id
     and p.player_number > game_set_next_player.player_number
     order by p.player_number asc
     limit 1;
 
-    if next_player is null then
+    if next_player_number is null then
         -- get the first player instead
-        select p.player_number into next_player
+        select p.player_number into next_player_number
         from game_players p
         where p.game_id = the_game_id
         order by p.player_number asc
@@ -27,7 +27,7 @@ begin
 
     -- update the current player number in the game table
     update games g
-    set current_player_number = next_player
+    set current_player_number = next_player_number
     where g.id = the_game_id;
 end;
 $$;

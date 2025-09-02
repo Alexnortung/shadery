@@ -1,6 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import LobbyPlayers from "./LobbyPlayers";
 import JoinLobbyButton from "./JoinLobbyButton";
+import LeaveLobbyButton from "./LeaveLobbyButton";
+import StartGameButton from "./StartGameButton";
 
 type Props = {
 	params: Promise<{
@@ -21,7 +23,10 @@ export default async function Page({ params: paramsPromise }: Props) {
 	return (
 		<div>
 			<JoinLobbyButton lobbyId={lobbyId} />
+			<br />
+			<StartGameButton lobbyId={lobbyId} />
 			<LobbyPlayers lobbyId={lobbyId} />
+			<LeaveLobbyButton lobbyId={lobbyId} />
 		</div>
 	);
 }
