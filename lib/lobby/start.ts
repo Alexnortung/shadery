@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LobbyId } from "../type-aliases";
 import { createClient } from "@/utils/supabase/client";
 import { redirect } from "next/navigation";
@@ -28,26 +28,55 @@ export const useLobbyStartGame = () => {
 			queryClient.invalidateQueries({
 				queryKey: ["lobby", lobbyId],
 			});
-			redirect(`/game/${gameId}`);
+			// redirect(`/game/${gameId}`);
 		},
+	});
+};
+
+export const useLobbyGame = (lobbyId: LobbyId) => {
+	return useQuery({
+		queryKey: ["lobbyGame", lobbyId],
+		queryFn: async () => {
+			const supabase = createClient();
+			const response = await supabase
+				.from("lobby_game")
+				.select("*")
+				.eq("lobby_id", lobbyId)
+				.single();
+
+			if (response.error) {
+				throw response.error;
+			}
+
+			return response.data;
+		},
+		refetchOnWindowFocus: false,
 	});
 };
 
 export const useOnLobbyStarted = (lobbyId: LobbyId) => {
 	useEffect(() => {
 		const supabase = createClient();
-		supabase.channel("table-db-changes").on(
-			"postgres_changes",
-			{
-				event: "INSERT",
-				schema: "public",
-				table: "lobby_game",
-				filter: `lobby_id=eq.${lobbyId}`,
-			},
-			(payload) => {
-				const gameId = payload.new.game_id;
-				redirect(`/game/${gameId}`);
-			},
-		);
+		const channel = supabase
+			.channel("table-db-changes")
+			.on(
+				"postgres_changes",
+				{
+					event: "INSERT",
+					schema: "public",
+					table: "lobby_game",
+					filter: `lobby_id=eq.${lobbyId}`,
+				},
+				(payload) => {
+					const gameId = payload.new.game_id;
+					console.log("Lobby started, redirecting to game", gameId);
+					redirect(`/game/${gameId}`);
+				},
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
 	}, [lobbyId]);
 };

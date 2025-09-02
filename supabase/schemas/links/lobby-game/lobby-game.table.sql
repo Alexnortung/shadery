@@ -11,3 +11,5 @@ create table lobby_game (
     created_at timestamp with time zone default now() not null
 );
 alter table "lobby_game" enable row level security;
+alter publication supabase_realtime
+    add table lobby_game;

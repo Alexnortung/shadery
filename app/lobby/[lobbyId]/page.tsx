@@ -3,6 +3,7 @@ import LobbyPlayers from "./LobbyPlayers";
 import JoinLobbyButton from "./JoinLobbyButton";
 import LeaveLobbyButton from "./LeaveLobbyButton";
 import StartGameButton from "./StartGameButton";
+import LobbyRedirecter from "./LobbyRedirecter";
 
 type Props = {
 	params: Promise<{
@@ -22,6 +23,7 @@ export default async function Page({ params: paramsPromise }: Props) {
 
 	return (
 		<div>
+			<LobbyRedirecter lobbyId={lobbyId} />
 			<JoinLobbyButton lobbyId={lobbyId} />
 			<br />
 			<StartGameButton lobbyId={lobbyId} />
