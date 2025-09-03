@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import GameBoard from "./GameBoard";
 import { parseGameId } from "@/lib/game/utils";
+import GameActions from "./GameActions";
 
 type Props = {
 	params: Promise<{
@@ -23,6 +24,7 @@ export default async function Page({ params: paramsPromise }: Props) {
 			TODO:
 			<br />
 			<GameBoard gameId={gameId} />
+			<GameActions gameId={gameId} />
 		</div>
 	);
 }

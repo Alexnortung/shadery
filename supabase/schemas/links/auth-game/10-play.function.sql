@@ -34,12 +34,13 @@ begin
     end if;
 
     -- check if it is currently the player's turn
-    if game.current_player != player.player_number then
+    if game.current_player_number != player.player_number then
         raise exception 'It is not your turn';
     end if;
 
     -- TODO: check if the value is valid
 
     -- Run play logic
+    perform game_play_logic(the_game_id, player.player_number, value);
 end;
 $$;

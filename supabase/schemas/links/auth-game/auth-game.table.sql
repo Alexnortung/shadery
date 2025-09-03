@@ -7,3 +7,5 @@ create table auth_game (
         unique
 );
 alter table "auth_game" enable row level security;
+alter table auth_game
+    add constraint auth_game_pkey primary key (auth_uid, player_id);

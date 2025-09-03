@@ -69,6 +69,7 @@ export const useOnLobbyStarted = (lobbyId: LobbyId) => {
 				},
 				(payload) => {
 					const gameId = payload.new.game_id;
+					console.log("Received lobby started event", payload);
 					console.log("Lobby started, redirecting to game", gameId);
 					redirect(`/game/${gameId}`);
 				},

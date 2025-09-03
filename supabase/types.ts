@@ -155,7 +155,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          current_player_number: number
+          current_player_number?: number
           ended_at?: string | null
           id?: number
           size_x: number
@@ -191,14 +191,17 @@ export type Database = {
       }
       lobby_game: {
         Row: {
+          created_at: string
           game_id: number
           lobby_id: string
         }
         Insert: {
+          created_at?: string
           game_id: number
           lobby_id: string
         }
         Update: {
+          created_at?: string
           game_id?: number
           lobby_id?: string
         }
@@ -250,6 +253,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_game_get_user_games: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          current_player_number: number
+          ended_at: string | null
+          id: number
+          size_x: number
+          size_y: number
+        }[]
+      }
+      game_generate_board: {
+        Args: {
+          the_game_id: number
+          size_x: number
+          size_y: number
+          num_field_values: number
+        }
+        Returns: undefined
+      }
+      game_generate_player_position_by_number_simple: {
+        Args: { the_game_id: number; the_player_number: number }
+        Returns: {
+          position_x: number
+          position_y: number
+        }[]
+      }
       game_get_players_current_fields_ids: {
         Args: { player_id: number }
         Returns: number[]
@@ -262,18 +292,13 @@ export type Database = {
         Args: { the_game_id: number; player_number: number }
         Returns: undefined
       }
-      generate_board: {
-        Args: {
-          the_game_id: number
-          size_x: number
-          size_y: number
-          num_field_values: number
-        }
-        Returns: undefined
-      }
       get_user_lobby_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
+      }
+      lobby_game_create_players: {
+        Args: { the_lobby_id: string }
+        Returns: number[]
       }
       lobby_player_join: {
         Args: { the_lobby_id: string }

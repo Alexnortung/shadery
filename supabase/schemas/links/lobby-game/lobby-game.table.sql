@@ -13,3 +13,5 @@ create table lobby_game (
 alter table "lobby_game" enable row level security;
 alter publication supabase_realtime
     add table lobby_game;
+alter table lobby_game
+    add constraint lobby_game_pkey primary key (lobby_id, game_id);

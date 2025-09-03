@@ -1,7 +1,7 @@
 import z from "zod";
 import { GameId } from "../type-aliases";
 
-export const gameIdSchema = z.number().int();
+export const gameIdSchema = z.coerce.number().int();
 
 export const parseGameId = (gameId: unknown): GameId | null => {
 	const parsed = gameIdSchema.safeParse(gameId);

@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export const useGameBoard = (gameId: GameId) => {
 	return useQuery({
-		queryKey: ["game", "board"],
+		queryKey: ["game", gameId, "board"],
 		queryFn: async () => {
 			const supabase = createClient();
 			const response = await supabase

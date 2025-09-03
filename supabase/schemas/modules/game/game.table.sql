@@ -6,6 +6,8 @@ create table "games" (
     "ended_at" timestamp with time zone,
     "created_at" timestamp with time zone not null default now()
 );
+alter publication supabase_realtime
+    add table games;
 
 create table "game_players" (
     "id" bigserial primary key,
