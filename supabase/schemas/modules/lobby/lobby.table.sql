@@ -10,3 +10,8 @@ create table "lobby_players" (
     "player_number" int not null,
     constraint "uq_lobby_players_number" unique ("lobby_id", "player_number")
 );
+
+alter publication supabase_realtime
+    add table lobby_players;
+
+ALTER TABLE lobby_players REPLICA IDENTITY FULL;

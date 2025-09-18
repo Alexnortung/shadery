@@ -47,6 +47,7 @@ $function$
 ;
 
 -- HAS_UNTRACKABLE_DEPENDENCIES: Dependencies, i.e. other functions used in the function body, of non-sql functions cannot be tracked. As a result, we cannot guarantee that function dependencies are ordered properly relative to this statement. For adds, this means you need to ensure that all functions this function depends on are created/altered before this statement.
+DROP FUNCTION IF EXISTS public.user_get_game_player(bigint);
 CREATE OR REPLACE FUNCTION public.user_get_game_player(the_game_id bigint)
  RETURNS SETOF game_players
  LANGUAGE plpgsql
