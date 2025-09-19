@@ -50,4 +50,4 @@ create policy "Allow users to see players auth links in their lobbies"
             from lobby_players
             where lobby_players.lobby_id IN (select get_user_lobby_ids())
         )
-    )
+    );

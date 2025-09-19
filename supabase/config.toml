@@ -58,6 +58,7 @@ schema_paths = [
     "./schemas/modules/*/*.sql",
     "./schemas/links/*/*.table.sql",
     "./schemas/links/*/*.function.sql",
+    "./schemas/links/*/*.trigger.sql",
     "./schemas/links/*/*.policy.sql",
     "./schemas/links/*/*.sql",
     # "./schemas/api/*/*.sql",
