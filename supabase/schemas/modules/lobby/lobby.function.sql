@@ -46,7 +46,17 @@ create or replace function lobby_player_leave(
 returns void
 language plpgsql
 as $$
+declare
+    the_lobby lobbies%rowtype;
 begin
+    select l.* into the_lobby
+    from lobbies l
+    where l.id = the_lobby_id;
+
+    if the_lobby.ended_at is not null then
+        raise exception 'Lobby has ended';
+    end if;
+
     -- Currently we just delete the player entry. I am not sure if this needs to be different for auditing.
     delete from lobby_players
     where id = the_player_id
