@@ -17,6 +17,8 @@ begin
         y,
         floor(random() * num_field_values)::int as field_value
     from generate_series(0, size_x - 1) as x,
-         generate_series(0, size_y - 1) as y;
+         generate_series(0, size_y - 1) as y
+    on conflict do nothing
+    ;
 end;
 $$;

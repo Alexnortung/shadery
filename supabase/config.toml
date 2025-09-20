@@ -53,6 +53,7 @@ schema_paths = [
     "./schemas/modules/*/functions/*.sql",
     "./schemas/modules/*/*.function.sql",
     # "./schemas/modules/*/*.view.sql",
+    "./schemas/modules/*/triggers/*.sql",
     "./schemas/modules/*/*.trigger.sql",
     "./schemas/modules/*/*.policy.sql",
     "./schemas/modules/*/*.sql",

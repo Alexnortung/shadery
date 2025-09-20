@@ -43,6 +43,13 @@ as $$
 declare
     player_id bigint;
 begin
+    -- don't allow the player to play a value that is already held by another player
+    if (select value in (select field_value from game_get_players_initial_fields(the_game_id))) then
+        raise exception 'Value is already held by another player';
+    end if;
+
+    -- TODO: Only allow the player to play a value that is in the game
+
     -- update the game fields based on the player's fields
     select p.id into player_id
     from game_players p
