@@ -36,3 +36,23 @@ BEGIN
     SELECT id FROM fields;
 END;
 $$;
+
+create or replace function game_get_unclaimed_fields(
+    the_game_id games.id%type
+)
+returns setof game_fields
+language plpgsql
+as $$
+begin
+    return query
+    select f.*
+    from game_fields f
+    where f.game_id = the_game_id
+    and f.id not in (
+        select unnest(game_get_players_current_fields_ids(p.id))
+        from game_players p
+        where p.game_id = the_game_id
+    )
+    ;
+end;
+$$;

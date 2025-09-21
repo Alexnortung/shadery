@@ -32,6 +32,69 @@ begin
 end;
 $$;
 
+-- create or replace function game_get_scores(
+--     the_game_id games.id%type
+-- )
+-- returns table(
+--     player_id game_players.id%type,
+--     player_number game_players.player_number%type,
+--     score bigint
+-- )
+-- language plpgsql
+-- as $$
+-- begin
+--     return query
+--     select p.id, p.player_number, count(*) as score
+--     from game_players p
+--     left join game_fields f on f.field_value = p.initial_field_value
+--     where p.game_id = the_game_id
+--     group by p.id, p.player_number
+--     order by score desc, p.player_number desc;
+-- end;
+-- $$;
+
+create or replace function game_find_winner(
+    the_game_id games.id%type
+)
+returns game_players.id%type
+language plpgsql
+as $$
+declare
+    total_fields bigint;
+    winner_id game_players.id%type;
+begin
+    select count(*) into total_fields
+    from game_fields f
+    where f.game_id = the_game_id;
+
+    -- If a player has more than 50% of the fields, they win
+    select p.id into winner_id
+    from game_player_with_score p
+    where p.game_id = the_game_id
+    and p.score > total_fields / 2
+    order by p.score desc, p.player_number desc
+    limit 1;
+
+    if winner_id is not null then
+        return winner_id;
+    end if;
+
+    -- TODO: If a player has more fields than all other players owned fields + reachable fields, the player wins.
+
+    -- If all fields are taken, the player with the most fields wins
+    -- If it is a tie, the player who started last wins (the player with the highest player number)
+    if (select count(*) from game_get_unclaimed_fields(the_game_id)) <= 0 then
+        select p.id into winner_id
+        from game_player_with_score p
+        where p.game_id = the_game_id
+        order by p.score desc, p.player_number desc
+        limit 1;
+    end if;
+
+    return winner_id;
+end;
+$$;
+
 create or replace function game_play_logic(
     the_game_id bigint,
     player_number int,
