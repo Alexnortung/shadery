@@ -28,4 +28,4 @@ select results_eq(
 );
 
 select * from finish();
-end;
+rollback;

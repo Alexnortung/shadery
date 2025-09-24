@@ -47,6 +47,37 @@ create extension "supabase-dbdev";
 select dbdev.install('basejump-supabase_test_helpers');
 create extension if not exists "basejump-supabase_test_helpers" version '0.0.6';
 
+-- test that security_invoker has been enabled for all views in the given schema
+create or replace function tests.security_invoker_enabled_on_views(p_schema text)
+returns text
+language sql
+as $_func_$
+  select is_empty(
+    format($$
+      select
+          relname
+        from pg_class
+        join pg_catalog.pg_namespace n on n.oid = pg_class.relnamespace
+        where n.nspname = %L -- filter on the schema
+          and relkind='v' -- only select views
+          and (
+            -- if reloptions is null then the array check does
+            -- not work as you might expect :s (I think it might resolve
+            -- to null and then not null becomes false or something)
+            reloptions is null or
+            not (
+              -- lower case the options text and extract array, then check if any
+              -- elements match elements in our array of possibilities for the
+              -- security_invoker option being enabled
+              lower(reloptions::text)::text[] &&
+              array['security_invoker=1','security_invoker=true','security_invoker=on']
+            )
+          )
+    $$, p_schema),
+    format('The security_invoker option should be enabled for all views in the %L schema', p_schema)
+  );
+$_func_$;
+
 -- Verify setup with a no-op test
 begin;
 select plan(1);

@@ -49,7 +49,7 @@ begin
     from game_fields f
     where f.game_id = the_game_id
     and f.id not in (
-        select unnest(game_get_players_current_fields_ids(p.id))
+        select game_get_players_current_fields_ids(p.id)
         from game_players p
         where p.game_id = the_game_id
     )

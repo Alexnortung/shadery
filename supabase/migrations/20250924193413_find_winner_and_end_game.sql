@@ -1,64 +1,17 @@
-create or replace function game_set_next_player(
-    the_game_id games.id%type,
-    player_number game_players.player_number%type
-)
-returns void
-language plpgsql
-as $$
-declare
-    next_player_number game_players.player_number%type;
-begin
-    -- get the next player
-    select p.player_number into next_player_number
-    from game_players p
-    where p.game_id = the_game_id
-    and p.player_number > game_set_next_player.player_number
-    order by p.player_number asc
-    limit 1;
+create or replace view game_player_with_score with (security_invoker = true) as
+select
+    p.id,
+    p.game_id,
+    p.player_number,
+    (select count(*) from game_get_players_current_fields_ids(p.id)) as score
+from game_players p
+;
 
-    if next_player_number is null then
-        -- get the first player instead
-        select p.player_number into next_player_number
-        from game_players p
-        where p.game_id = the_game_id
-        order by p.player_number asc
-        limit 1;
-    end if;
-
-    -- update the current player number in the game table
-    update games g
-    set current_player_number = next_player_number
-    where g.id = the_game_id;
-end;
-$$;
-
--- create or replace function game_get_scores(
---     the_game_id games.id%type
--- )
--- returns table(
---     player_id game_players.id%type,
---     player_number game_players.player_number%type,
---     score bigint
--- )
--- language plpgsql
--- as $$
--- begin
---     return query
---     select p.id, p.player_number, count(*) as score
---     from game_players p
---     left join game_fields f on f.field_value = p.initial_field_value
---     where p.game_id = the_game_id
---     group by p.id, p.player_number
---     order by score desc, p.player_number desc;
--- end;
--- $$;
-
-create or replace function game_find_winner(
-    the_game_id games.id%type
-)
-returns game_players.id%type
-language plpgsql
-as $$
+-- HAS_UNTRACKABLE_DEPENDENCIES: Dependencies, i.e. other functions used in the function body, of non-sql functions cannot be tracked. As a result, we cannot guarantee that function dependencies are ordered properly relative to this statement. For adds, this means you need to ensure that all functions this function depends on are created/altered before this statement.
+CREATE OR REPLACE FUNCTION public.game_find_winner(the_game_id bigint)
+ RETURNS bigint
+ LANGUAGE plpgsql
+AS $function$
 declare
     total_fields bigint;
     winner_id game_players.id%type;
@@ -93,16 +46,34 @@ begin
 
     return winner_id;
 end;
-$$;
+$function$
+;
 
-create or replace function game_play_logic(
-    the_game_id bigint,
-    player_number int,
-    value int
-)
-returns void
-language plpgsql
-as $$
+-- HAS_UNTRACKABLE_DEPENDENCIES: Dependencies, i.e. other functions used in the function body, of non-sql functions cannot be tracked. As a result, we cannot guarantee that function dependencies are ordered properly relative to this statement. For adds, this means you need to ensure that all functions this function depends on are created/altered before this statement.
+CREATE OR REPLACE FUNCTION public.game_get_unclaimed_fields(the_game_id bigint)
+ RETURNS SETOF game_fields
+ LANGUAGE plpgsql
+AS $function$
+begin
+    return query
+    select f.*
+    from game_fields f
+    where f.game_id = the_game_id
+    and f.id not in (
+        select game_get_players_current_fields_ids(p.id)
+        from game_players p
+        where p.game_id = the_game_id
+    )
+    ;
+end;
+$function$
+;
+
+-- HAS_UNTRACKABLE_DEPENDENCIES: Dependencies, i.e. other functions used in the function body, of non-sql functions cannot be tracked. As a result, we cannot guarantee that function dependencies are ordered properly relative to this statement. For adds, this means you need to ensure that all functions this function depends on are created/altered before this statement.
+CREATE OR REPLACE FUNCTION public.game_play_logic(the_game_id bigint, player_number integer, value integer)
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
 declare
     player_id game_players.id%type;
     winner_id game_players.id%type;
@@ -142,4 +113,6 @@ begin
         where g.id = the_game_id;
     end if;
 end;
-$$;
+$function$
+;
+

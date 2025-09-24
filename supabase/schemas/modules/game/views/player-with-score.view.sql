@@ -1,4 +1,4 @@
-create or replace view game_player_with_score as
+create or replace view game_player_with_score with (security_invoker = true) as
 select
     p.id,
     p.game_id,
