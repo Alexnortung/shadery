@@ -1,0 +1,32 @@
+name: "database-tests"
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  pull_request:
+    types:
+      - synchronize
+      - opened
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        shell: "nix develop -c bash -e {0}"
+        run: bun install
+
+      - name: Start database
+        run: bun run supabase db start
+        shell: "nix develop -c bash -e {0}"
+
+      - name: Test database
+        run: bun run supabase test db
+        shell: "nix develop -c bash -e {0}"
