@@ -9,7 +9,7 @@ type Props = {
 	children: ReactNode;
 };
 
-const ClientProvicers = ({ children }: Props) => {
+const ClientProviders = ({ children }: Props) => {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ReactQueryDevtools initialIsOpen={false} />
@@ -18,4 +18,4 @@ const ClientProvicers = ({ children }: Props) => {
 	);
 };
 
-export default ClientProvicers;
+export default ClientProviders;

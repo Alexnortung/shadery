@@ -1,70 +1,58 @@
-import { signOutAction } from "@/app/actions";
-import { hasEnvVars } from "@/utils/supabase/check-env-vars";
-import Link from "next/link";
-import { Badge } from "./ui/badge";
+"use client";
+
+import { useUser } from "@/lib/auth/user";
+import Loader from "./loader";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuPortal,
+	DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { useIsAuthenticating, useSignOut } from "@/lib/auth/authenticate";
 import { Button } from "./ui/button";
-import { createClient } from "@/utils/supabase/server";
+import Link from "next/link";
 
-export default async function AuthButton() {
-  const supabase = await createClient();
+const HeaderAuth = () => {
+	const { data: user, isLoading } = useUser();
+	const { mutateAsync: signOut } = useSignOut();
+	const isAuthenticating = useIsAuthenticating();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+	if (isLoading) {
+		return <Loader />;
+	}
+	if (!user) {
+		return (
+			<div className="flex gap-2">
+				<Button size="sm" asChild>
+					<Link href="/sign-in">Sign In</Link>
+				</Button>
+				<Button size="sm" asChild variant="secondary">
+					<Link href="/sign-up">Sign Up</Link>
+				</Button>
+			</div>
+		);
+	}
 
-  if (!hasEnvVars) {
-    return (
-      <>
-        <div className="flex gap-4 items-center">
-          <div>
-            <Badge
-              variant={"default"}
-              className="font-normal pointer-events-none"
-            >
-              Please update .env.local file with anon key and url
-            </Badge>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              asChild
-              size="sm"
-              variant={"outline"}
-              disabled
-              className="opacity-75 cursor-none pointer-events-none"
-            >
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant={"default"}
-              disabled
-              className="opacity-75 cursor-none pointer-events-none"
-            >
-              <Link href="/sign-up">Sign up</Link>
-            </Button>
-          </div>
-        </div>
-      </>
-    );
-  }
-  return user ? (
-    <div className="flex items-center gap-4">
-      Hey, {user.email}!
-      <form action={signOutAction}>
-        <Button type="submit" variant={"outline"}>
-          Sign out
-        </Button>
-      </form>
-    </div>
-  ) : (
-    <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
-        <Link href="/sign-in">Sign in</Link>
-      </Button>
-      <Button asChild size="sm" variant={"default"}>
-        <Link href="/sign-up">Sign up</Link>
-      </Button>
-    </div>
-  );
-}
+	// return <div>{user.is_anonymous ? "Guest" : user.email}</div>;
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger>
+				{user.is_anonymous ? "Guest" : user.email}
+			</DropdownMenuTrigger>
+			<DropdownMenuPortal>
+				<DropdownMenuContent>
+					<DropdownMenuItem>Profile</DropdownMenuItem>
+					<DropdownMenuItem
+						disabled={isAuthenticating}
+						onClick={() => signOut()}
+					>
+						Sign out
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenuPortal>
+		</DropdownMenu>
+	);
+};
+
+export default HeaderAuth;
