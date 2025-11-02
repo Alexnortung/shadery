@@ -2,9 +2,6 @@
 
 import { useLobbyPlayers } from "@/lib/lobby/players";
 import { LobbyId } from "@/lib/type-aliases";
-import { Database } from "@/supabase/types";
-import { createClient } from "@/utils/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 
 type Props = {
 	lobbyId: LobbyId;
