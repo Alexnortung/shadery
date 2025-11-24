@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useLeaveLobby } from "@/lib/lobby/leave";
 import { LobbyId } from "@/lib/type-aliases";
 
@@ -11,15 +12,15 @@ const LeaveLobbyButton = ({ lobbyId }: Props) => {
 	const { mutateAsync: leaveLobby, isPending } = useLeaveLobby();
 
 	return (
-		<button
-			type="button"
+		<Button
+			variant="secondary"
 			onClick={() => {
 				leaveLobby({ lobbyId });
 			}}
 			disabled={isPending}
 		>
 			Leave
-		</button>
+		</Button>
 	);
 };
 

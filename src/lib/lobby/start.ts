@@ -56,7 +56,7 @@ export const useLobbyGame = (lobbyId: LobbyId) => {
 
 export const useOnLobbyStarted = (lobbyId: LobbyId) => {
 	useEffect(() => {
-		console.log("Setting up lobby started listener for", lobbyId);
+		// console.log("Setting up lobby started listener for", lobbyId);
 		const supabase = createClient();
 		const channel = supabase
 			.channel(`game_started:lobbyId=eq.${lobbyId}`)

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useLobbyStartGame } from "@/lib/lobby/start";
 import { LobbyId } from "@/lib/type-aliases";
 
@@ -11,15 +12,14 @@ const StartGameButton = ({ lobbyId }: Props) => {
 	const { mutateAsync: startGame, isPending } = useLobbyStartGame();
 
 	return (
-		<button
-			type="button"
+		<Button
 			onClick={() => {
 				startGame({ lobbyId });
 			}}
 			disabled={isPending}
 		>
 			Start game
-		</button>
+		</Button>
 	);
 };
 
