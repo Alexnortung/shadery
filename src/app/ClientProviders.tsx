@@ -1,4 +1,5 @@
 "use client";
+import { SupabaseProvider } from "@/lib/providers/supabase";
 import { ConnectionManagerDevtools } from "@/lib/socket-manager/new/devtools";
 import { ConnectionManagerProvider } from "@/lib/socket-manager/new/hooks";
 import { ConnectionManager } from "@/lib/socket-manager/new/manager";
@@ -15,13 +16,15 @@ type Props = {
 
 const ClientProviders = ({ children }: Props) => {
 	return (
-		<QueryClientProvider client={queryClient}>
-			<ConnectionManagerProvider manager={connectionManager}>
-				<ConnectionManagerDevtools />
-				<ReactQueryDevtools initialIsOpen={false} />
-				{children}
-			</ConnectionManagerProvider>
-		</QueryClientProvider>
+		<SupabaseProvider>
+			<QueryClientProvider client={queryClient}>
+				<ConnectionManagerProvider manager={connectionManager}>
+					<ConnectionManagerDevtools />
+					<ReactQueryDevtools initialIsOpen={false} />
+					{children}
+				</ConnectionManagerProvider>
+			</QueryClientProvider>
+		</SupabaseProvider>
 	);
 };
 

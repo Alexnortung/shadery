@@ -1,9 +1,10 @@
 import { createClient } from "@/utils/supabase/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const AUTHENTICATE_KEY = "authenticate";
 
 export const useSignInAsGuest = () => {
+	const queryClient = useQueryClient();
 	return useMutation({
 		mutationKey: [AUTHENTICATE_KEY, "sign-in-guest"],
 		mutationFn: async () => {
@@ -15,13 +16,14 @@ export const useSignInAsGuest = () => {
 			return response.data;
 		},
 
-		onSettled: (_data, _error, _variables, _, context) => {
-			context.client.invalidateQueries({ queryKey: ["auth"] });
+		onSettled: (_data, _error, _variables, context) => {
+			queryClient.invalidateQueries({ queryKey: ["auth"] });
 		},
 	});
 };
 
 export const useSignOut = () => {
+	const queryClient = useQueryClient();
 	return useMutation({
 		mutationKey: [AUTHENTICATE_KEY, "sign-out"],
 		mutationFn: async () => {
@@ -31,8 +33,8 @@ export const useSignOut = () => {
 				throw response.error;
 			}
 		},
-		onSettled: (_data, _error, _variables, _, context) => {
-			context.client.invalidateQueries({ queryKey: ["auth"] });
+		onSettled: (_data, _error, _variables, context) => {
+			queryClient.invalidateQueries({ queryKey: ["auth"] });
 		},
 	});
 };

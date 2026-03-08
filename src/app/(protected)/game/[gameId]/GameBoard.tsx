@@ -2,10 +2,13 @@
 
 import { useGameBoard } from "@/lib/game/board";
 import { useGames } from "@/lib/game/games";
+import { useSupabase } from "@/lib/providers/supabase";
 import { GameId } from "@/lib/type-aliases";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { getColorClass } from "./lib";
 
 type Props = {
 	gameId: GameId;
@@ -13,34 +16,36 @@ type Props = {
 
 const GameBoard = ({ gameId }: Props) => {
 	const queryClient = useQueryClient();
-	useEffect(() => {
-		const supabase = createClient();
-		const channel = supabase
-			.channel("table-db-changes")
-			.on(
-				"postgres_changes",
-				{
-					event: "*",
-					schema: "public",
-					table: "games",
-					filter: `id=eq.${gameId}`,
-				},
-				(payload) => {
-					// Invalidate game board
-					queryClient.invalidateQueries({
-						queryKey: ["game", gameId],
-					});
-				},
-			)
-			.subscribe();
+	const supabase = useSupabase();
+	// useEffect(() => {
+	// 	const channel = supabase
+	// 		.channel("table-db-changes")
+	// 		.on(
+	// 			"postgres_changes",
+	// 			{
+	// 				event: "*",
+	// 				schema: "public",
+	// 				table: "games",
+	// 				filter: `id=eq.${gameId}`,
+	// 			},
+	// 			(payload) => {
+	// 				// Invalidate game board
+	// 				queryClient.invalidateQueries({
+	// 					queryKey: ["game", gameId],
+	// 				});
+	// 			},
+	// 		)
+	// 		.subscribe();
+	//
+	// 	console.log("Subscribed to game updates", gameId);
+	//
+	// 	return () => {
+	// 		console.log("Unsubscribing from game updates", gameId);
+	// 		supabase.removeChannel(channel);
+	// 	};
+	// }, [gameId, queryClient, supabase]);
 
-		console.log("Subscribed to game updates", gameId);
-
-		return () => {
-			console.log("Unsubscribing from game updates", gameId);
-			supabase.removeChannel(channel);
-		};
-	}, [gameId, queryClient]);
+	// TODO: useSubscribeToGameTurnChange
 
 	const { data } = useGameBoard(gameId);
 	const minX =
@@ -56,20 +61,23 @@ const GameBoard = ({ gameId }: Props) => {
 		<div
 			className="grid"
 			style={{
-				gridTemplateRows: `repeat(${maxY - minY + 1}, 1fr)`,
-				gridTemplateColumns: `repeat(${maxX - minX + 1}, 1fr)`,
+				gridTemplateRows: `repeat(${maxY - minY + 1}, 1.25rem)`,
+				gridTemplateColumns: `repeat(${maxX - minX + 1}, 1.25rem)`,
 			}}
 		>
 			{data?.map((field) => (
 				<div
 					key={field.id}
-					className="field size-5"
+					className={cn(
+						"field size-5",
+						field.field_value !== null && getColorClass(field.field_value),
+					)}
 					style={{
 						gridRowStart: field.y - minY + 1,
 						gridColumnStart: field.x - minX + 1,
 					}}
 				>
-					{field.field_value}
+					{/* {field.field_value} */}
 				</div>
 			))}
 		</div>

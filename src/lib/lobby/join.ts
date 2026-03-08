@@ -4,11 +4,11 @@ import { createClient } from "@/utils/supabase/client";
 
 export const useJoinLobby = () => {
 	const queryClient = useQueryClient();
+	const supabase = createClient();
 	return useMutation({
 		mutationKey: ["joinLobby"],
 		mutationFn: async ({ lobbyId }: { lobbyId: LobbyId }) => {
 			console.log("joining", lobbyId);
-			const supabase = createClient();
 			const lobbyPlayerIdResponse = await supabase.rpc("user_join_lobby", {
 				the_lobby_id: lobbyId,
 			});

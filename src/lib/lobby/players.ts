@@ -12,56 +12,76 @@ import { useConnectionSubscription } from "../socket-manager/new/hooks";
 // 	})
 // };
 
-export const useLobbyPlayers = ({
-	lobbyId,
-}: {
-	lobbyId: LobbyId;
-}) => {
+export const useLobbyPlayers = ({ lobbyId }: { lobbyId: LobbyId }) => {
 	const queryClient = useQueryClient();
+	const supabase = createClient();
 
-	useConnectionSubscription(
-		{
-			key: `table:lobby_players:lobbyId=eq.${lobbyId}`,
-			connectFn: ({ onMessage }) => {
-				const supabase = createClient();
-				const channel = supabase
-					.channel(`table:lobby_players:lobbyId=eq.${lobbyId}`)
-					.on(
-						"postgres_changes",
-						{
-							event: "*",
-							schema: "public",
-							table: "lobby_players",
-							filter: `lobby_id=eq.${lobbyId}`,
-						},
-						(payload) => {
-							onMessage(payload);
-						},
-					)
-					.subscribe();
+	useEffect(() => {
+		const channel = supabase
+			.channel(`table:lobby_players:lobbyId=eq.${lobbyId}`)
+			.on(
+				"postgres_changes",
+				{
+					event: "*",
+					schema: "public",
+					table: "lobby_players",
+					filter: `lobby_id=eq.${lobbyId}`,
+				},
+				(payload) => {
+					queryClient.invalidateQueries({
+						queryKey: ["lobby", lobbyId, "players"],
+					});
+				},
+			)
+			.subscribe();
 
-				return {
-					disconnectFn: () => {
-						supabase.removeChannel(channel);
-					},
-				};
-			},
-		},
-		{
-			key: `lobby-players-updated`,
-			listener: () => {
-				// Invalidate and refetch
-				queryClient.invalidateQueries({
-					queryKey: ["lobby", lobbyId, "players"],
-				});
-			},
-		},
-	);
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [lobbyId]);
+
+	// useConnectionSubscription(
+	// 	{
+	// 		key: `table:lobby_players:lobbyId=eq.${lobbyId}`,
+	// 		connectFn: ({ onMessage }) => {
+	// 			const supabase = createClient();
+	// 			const channel = supabase
+	// 				.channel(`table:lobby_players:lobbyId=eq.${lobbyId}`)
+	// 				.on(
+	// 					"postgres_changes",
+	// 					{
+	// 						event: "*",
+	// 						schema: "public",
+	// 						table: "lobby_players",
+	// 						filter: `lobby_id=eq.${lobbyId}`,
+	// 					},
+	// 					(payload) => {
+	// 						onMessage(payload);
+	// 					},
+	// 				)
+	// 				.subscribe();
+	//
+	// 			return {
+	// 				disconnectFn: () => {
+	// 					supabase.removeChannel(channel);
+	// 				},
+	// 			};
+	// 		},
+	// 	},
+	// 	{
+	// 		key: `lobby-players-updated`,
+	// 		listener: () => {
+	// 			// Invalidate and refetch
+	// 			queryClient.invalidateQueries({
+	// 				queryKey: ["lobby", lobbyId, "players"],
+	// 			});
+	// 		},
+	// 	},
+	// );
 
 	return useQuery({
 		queryKey: ["lobby", lobbyId, "players"],
 		queryFn: async () => {
-			const supabase = createClient();
 			const playerResponse = await supabase
 				.from("lobby_players")
 				.select(`

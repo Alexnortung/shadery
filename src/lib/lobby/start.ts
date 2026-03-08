@@ -3,13 +3,14 @@ import { LobbyId } from "../type-aliases";
 import { createClient } from "@/utils/supabase/client";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
+import { useSupabase } from "../providers/supabase";
 
 export const useLobbyStartGame = () => {
 	const queryClient = useQueryClient();
+	const supabase = useSupabase();
 	return useMutation({
 		mutationKey: ["lobbyStartGame"],
 		mutationFn: async ({ lobbyId }: { lobbyId: LobbyId }) => {
-			const supabase = createClient();
 			const response = await supabase.rpc("user_lobby_start_game", {
 				the_lobby_id: lobbyId,
 			});
@@ -34,10 +35,10 @@ export const useLobbyStartGame = () => {
 };
 
 export const useLobbyGame = (lobbyId: LobbyId) => {
+	const supabase = useSupabase();
 	return useQuery({
 		queryKey: ["lobbyGame", lobbyId],
 		queryFn: async () => {
-			const supabase = createClient();
 			const response = await supabase
 				.from("lobby_game")
 				.select("*")
@@ -55,9 +56,9 @@ export const useLobbyGame = (lobbyId: LobbyId) => {
 };
 
 export const useOnLobbyStarted = (lobbyId: LobbyId) => {
+	const supabase = useSupabase();
 	useEffect(() => {
 		// console.log("Setting up lobby started listener for", lobbyId);
-		const supabase = createClient();
 		const channel = supabase
 			.channel(`game_started:lobbyId=eq.${lobbyId}`)
 			.on(

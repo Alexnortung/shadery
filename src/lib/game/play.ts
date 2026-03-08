@@ -4,14 +4,17 @@ import { GameId } from "../type-aliases";
 
 export const usePlay = () => {
 	const queryClient = useQueryClient();
+	const supabase = createClient();
 	return useMutation({
 		mutationKey: ["game", "play"],
 		mutationFn: async ({
 			value,
 			gameId,
-		}: { value: number; gameId: GameId }) => {
-			const supbase = createClient();
-			const response = await supbase.rpc("user_game_player_play", {
+		}: {
+			value: number;
+			gameId: GameId;
+		}) => {
+			const response = await supabase.rpc("user_game_player_play", {
 				value,
 				the_game_id: gameId,
 			});
