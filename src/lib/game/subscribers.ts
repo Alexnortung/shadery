@@ -1,17 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { GameId } from "../type-aliases";
 import { useSupabase } from "../providers/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 
-export const useSubscribeToGameTurnChange = (
-	gameId: GameId,
-	subscriber: () => void,
-) => {
+export const useOnGameTurnChange = (gameId: GameId, subscriber: () => void) => {
 	const supabase = useSupabase();
+	const id = useId();
 
 	useEffect(() => {
 		const channel = supabase
-			.channel("table-db-changes")
+			.channel(`table-db-changes-${id}`)
 			.on(
 				"postgres_changes",
 				{
@@ -32,5 +30,5 @@ export const useSubscribeToGameTurnChange = (
 			// console.log("Unsubscribing from game updates", gameId);
 			supabase.removeChannel(channel);
 		};
-	}, [gameId, supabase]);
+	}, [gameId, supabase, subscriber]);
 };

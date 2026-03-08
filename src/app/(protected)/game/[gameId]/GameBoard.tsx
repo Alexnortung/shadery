@@ -9,6 +9,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getColorClass } from "./lib";
+import { useGameCurrentPlayer } from "@/lib/game/game";
 
 type Props = {
 	gameId: GameId;
@@ -45,7 +46,7 @@ const GameBoard = ({ gameId }: Props) => {
 	// 	};
 	// }, [gameId, queryClient, supabase]);
 
-	// TODO: useSubscribeToGameTurnChange
+	const currentPlayer = useGameCurrentPlayer(gameId);
 
 	const { data } = useGameBoard(gameId);
 	const minX =

@@ -1,27 +1,30 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { GameId } from "../type-aliases";
 import { useSupabase } from "../providers/supabase";
+import { GameId } from "../type-aliases";
 import { useOnGameTurnChange } from "./subscribers";
 import { useCallback } from "react";
 
-export const useGameBoard = (gameId: GameId) => {
+export const useGame = (gameId: GameId) => {
 	const supabase = useSupabase();
 	const queryClient = useQueryClient();
+
 	useOnGameTurnChange(
 		gameId,
 		useCallback(() => {
 			queryClient.invalidateQueries({
-				queryKey: ["game", gameId, "board"],
+				queryKey: ["game", gameId, "info"],
 			});
-		}, [queryClient, gameId]),
+		}, []),
 	);
+
 	return useQuery({
-		queryKey: ["game", gameId, "board"],
+		queryKey: ["game", gameId, "info"],
 		queryFn: async () => {
 			const response = await supabase
-				.from("game_fields")
+				.from("games")
 				.select("*")
-				.eq("game_id", gameId);
+				.eq("id", gameId)
+				.single();
 			if (response.error) {
 				throw new Error(response.error.message);
 			}
@@ -29,4 +32,10 @@ export const useGameBoard = (gameId: GameId) => {
 			return response.data;
 		},
 	});
+};
+
+export const useGameCurrentPlayer = (gameId: GameId) => {
+	const { data: game } = useGame(gameId);
+	// TODO: use select
+	return game?.current_player_number;
 };

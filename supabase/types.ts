@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json
           operationName?: string
           query?: string
           variables?: Json
-          extensions?: Json
         }
         Returns: Json
       }
@@ -48,6 +48,13 @@ export type Database = {
           player_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "auth_game_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "game_player_with_score"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "auth_game_player_id_fkey"
             columns: ["player_id"]
@@ -250,11 +257,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      game_player_with_score: {
+        Row: {
+          game_id: number | null
+          id: number | null
+          player_number: number | null
+          score: number | null
+        }
+        Insert: {
+          game_id?: number | null
+          id?: number | null
+          player_number?: number | null
+          score?: never
+        }
+        Update: {
+          game_id?: number | null
+          id?: number | null
+          player_number?: number | null
+          score?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auth_game_get_user_games: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           current_player_number: number
@@ -263,13 +298,20 @@ export type Database = {
           size_x: number
           size_y: number
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "games"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
+      game_find_winner: { Args: { the_game_id: number }; Returns: number }
       game_generate_board: {
         Args: {
-          the_game_id: number
+          num_field_values: number
           size_x: number
           size_y: number
-          num_field_values: number
+          the_game_id: number
         }
         Returns: undefined
       }
@@ -284,34 +326,57 @@ export type Database = {
         Args: { player_id: number }
         Returns: number[]
       }
+      game_get_players_initial_fields: {
+        Args: { the_game_id: number }
+        Returns: {
+          field_value: number | null
+          game_id: number | null
+          id: number
+          x: number
+          y: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "game_fields"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      game_get_unclaimed_fields: {
+        Args: { the_game_id: number }
+        Returns: {
+          field_value: number | null
+          game_id: number | null
+          id: number
+          x: number
+          y: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "game_fields"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       game_play_logic: {
-        Args: { the_game_id: number; player_number: number; value: number }
+        Args: { player_number: number; the_game_id: number; value: number }
         Returns: undefined
       }
       game_set_next_player: {
-        Args: { the_game_id: number; player_number: number }
+        Args: { player_number: number; the_game_id: number }
         Returns: undefined
       }
-      get_user_lobby_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
+      get_user_lobby_ids: { Args: never; Returns: string[] }
       lobby_game_create_players: {
         Args: { the_lobby_id: string }
         Returns: number[]
       }
-      lobby_player_join: {
-        Args: { the_lobby_id: string }
-        Returns: number
-      }
+      lobby_player_join: { Args: { the_lobby_id: string }; Returns: number }
       lobby_player_leave: {
         Args: { the_lobby_id: string; the_player_id: number }
         Returns: undefined
       }
-      user_create_lobby: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      user_create_lobby: { Args: never; Returns: string }
       user_game_player_play: {
         Args: { the_game_id: number; value: number }
         Returns: undefined
@@ -324,20 +389,17 @@ export type Database = {
           player_number: number
           position_x: number
           position_y: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "game_players"
+          isOneToOne: false
+          isSetofReturn: true
         }
       }
-      user_join_lobby: {
-        Args: { the_lobby_id: string }
-        Returns: number
-      }
-      user_leave_lobby: {
-        Args: { the_lobby_id: string }
-        Returns: undefined
-      }
-      user_lobby_start_game: {
-        Args: { the_lobby_id: string }
-        Returns: number
-      }
+      user_join_lobby: { Args: { the_lobby_id: string }; Returns: number }
+      user_leave_lobby: { Args: { the_lobby_id: string }; Returns: undefined }
+      user_lobby_start_game: { Args: { the_lobby_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never
@@ -348,21 +410,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -380,14 +446,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -403,14 +471,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -426,14 +496,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -441,14 +513,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
