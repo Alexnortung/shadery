@@ -16,18 +16,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Check for Supabase changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            supabase:
+              - 'supabase/**'
+
       - uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
+        if: steps.changes.outputs.supabase == 'true' || github.event_name == 'workflow_dispatch'
         shell: "nix develop -c bash -e {0}"
         run: bun install
 
       - name: Start database
+        if: steps.changes.outputs.supabase == 'true' || github.event_name == 'workflow_dispatch'
         run: bun run supabase db start
         shell: "nix develop -c bash -e {0}"
 
+      - name: Check migrations have been created
+        if: steps.changes.outputs.supabase == 'true' || github.event_name == 'workflow_dispatch'
+        shell: "nix develop -c bash -e {0}"
+        run: |
+          bun run supabase:migration:create -f ci_check
+          # Check if the command generated any new untracked files
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "❌ Error: Uncommitted database changes detected."
+            echo "A new migration file was generated because the remote schema differs from the local migrations."
+            echo "Please run the migration command locally and commit the resulting file."
+            echo "---"
+            git status
+            exit 1
+          fi
+          echo "✅ No missing migrations detected."
+
+      - name: Check that migrations can run properly
+        if: steps.changes.outputs.supabase == 'true' || github.event_name == 'workflow_dispatch'
+        run: bun run supabase:migration:up
+        shell: "nix develop -c bash -e {0}"
+
       - name: Test database
+        if: steps.changes.outputs.supabase == 'true' || github.event_name == 'workflow_dispatch'
         run: bun run supabase test db
         shell: "nix develop -c bash -e {0}"
