@@ -3,6 +3,7 @@ import GameBoard from "./GameBoard";
 import { parseGameId } from "@/lib/game/utils";
 import GameActions from "./GameActions";
 import GamePlayers from "./GamePlayers";
+import EndGameModal from "./EndGameModal";
 
 type Props = {
 	params: Promise<{
@@ -24,7 +25,10 @@ export default async function Page({ params: paramsPromise }: Props) {
 			<br />
 			<GamePlayers gameId={gameId} />
 			<br />
-			<GameBoard gameId={gameId} />
+			<EndGameModal gameId={gameId} />
+			<div className="w-full h-full flex justify-center items-center my-8">
+				<GameBoard gameId={gameId} />
+			</div>
 			<GameActions gameId={gameId} />
 		</div>
 	);

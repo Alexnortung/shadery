@@ -1,10 +1,12 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSupabase } from "../providers/supabase";
 import { GameId } from "../type-aliases";
 import { useGameBoard } from "./board";
 import { useGame } from "./game";
 import { useOnGameTurnChange } from "./subscribers";
 import { useCallback } from "react";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@supabase/types";
 
 export const useGamePlayers = (gameId: GameId) => {
 	const supabase = useSupabase();
@@ -25,7 +27,29 @@ export const useGamePlayers = (gameId: GameId) => {
 	});
 };
 
-export const useGamePlayersWithScore = (gameId: GameId) => {
+const gamePlayerWithScoreQuery = (
+	gameId: GameId,
+	supabase: SupabaseClient<Database>,
+) =>
+	queryOptions({
+		queryKey: ["game", gameId, "playersWithScore"],
+		queryFn: async () => {
+			const response = await supabase
+				.from("game_player_with_score")
+				.select("*")
+				.eq("game_id", gameId);
+			if (response.error) {
+				throw new Error(response.error.message);
+			}
+
+			return response.data;
+		},
+	});
+
+export const useGamePlayersWithScore = (
+	gameId: GameId,
+	options?: Partial<ReturnType<typeof gamePlayerWithScoreQuery>>,
+) => {
 	const supabase = useSupabase();
 	const queryClient = useQueryClient();
 
@@ -39,18 +63,8 @@ export const useGamePlayersWithScore = (gameId: GameId) => {
 	);
 
 	return useQuery({
-		queryKey: ["game", gameId, "playersWithScore"],
-		queryFn: async () => {
-			const response = await supabase
-				.from("game_player_with_score")
-				.select("*")
-				.eq("game_id", gameId);
-			if (response.error) {
-				throw new Error(response.error.message);
-			}
-
-			return response.data;
-		},
+		...gamePlayerWithScoreQuery(gameId, supabase),
+		...options,
 	});
 };
 

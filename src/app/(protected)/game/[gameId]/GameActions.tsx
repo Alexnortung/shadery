@@ -29,7 +29,7 @@ const GameActions = ({ gameId }: Props) => {
 							!isSelfPlayersTurn || values.includes(value) || !!game?.ended_at
 						}
 						className={cn(
-							"btn btn-primary m-2 min-w-64 min-h-16 disabled:cursor-not-allowed disabled:opacity-50",
+							"btn btn-primary m-2 min-w-64 min-h-16 disabled:cursor-not-allowed disabled:opacity-30",
 							getColorClass(value),
 						)}
 						onClick={() => {

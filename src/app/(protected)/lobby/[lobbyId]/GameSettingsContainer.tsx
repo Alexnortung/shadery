@@ -2,13 +2,14 @@
 
 import { LobbyId } from "@/lib/type-aliases";
 import JoinLobbyButton from "./JoinLobbyButton";
+import { useHasJoinedLobby } from "@/lib/lobby/join";
 
 type Props = {
 	lobbyId: LobbyId;
 };
 
 const GameSettingsContainer = ({ lobbyId }: Props) => {
-	const hasJoinedLobby = false;
+	const { data: hasJoinedLobby } = useHasJoinedLobby(lobbyId);
 
 	if (!hasJoinedLobby) {
 		return (

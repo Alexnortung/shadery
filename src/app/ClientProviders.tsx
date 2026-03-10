@@ -18,11 +18,8 @@ const ClientProviders = ({ children }: Props) => {
 	return (
 		<SupabaseProvider>
 			<QueryClientProvider client={queryClient}>
-				<ConnectionManagerProvider manager={connectionManager}>
-					<ConnectionManagerDevtools />
-					<ReactQueryDevtools initialIsOpen={false} />
-					{children}
-				</ConnectionManagerProvider>
+				<ReactQueryDevtools initialIsOpen={false} />
+				{children}
 			</QueryClientProvider>
 		</SupabaseProvider>
 	);

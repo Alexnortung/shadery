@@ -1,10 +1,9 @@
-create or replace function user_lobby_start_game(
-    the_lobby_id lobbies.id%type
-)
-returns games.id%type
-language plpgsql
-security definer
-as $$
+-- HAS_UNTRACKABLE_DEPENDENCIES: Dependencies, i.e. other functions used in the function body, of non-sql functions cannot be tracked. As a result, we cannot guarantee that function dependencies are ordered properly relative to this statement. For adds, this means you need to ensure that all functions this function depends on are created/altered before this statement.
+CREATE OR REPLACE FUNCTION public.user_lobby_start_game(the_lobby_id uuid)
+ RETURNS bigint
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
 declare
     the_game_id games.id%type;
     the_starting_player_number game_players.player_number%type;
@@ -50,4 +49,6 @@ begin
 
     return the_game_id;
 end;
-$$;
+$function$
+;
+

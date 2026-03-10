@@ -224,6 +224,13 @@ export type Database = {
             foreignKeyName: "lobby_game_lobby_id_fkey"
             columns: ["lobby_id"]
             isOneToOne: true
+            referencedRelation: "auth_joined_lobby"
+            referencedColumns: ["lobby_id"]
+          },
+          {
+            foreignKeyName: "lobby_game_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: true
             referencedRelation: "lobbies"
             referencedColumns: ["id"]
           },
@@ -250,6 +257,13 @@ export type Database = {
             foreignKeyName: "lobby_players_lobby_id_fkey"
             columns: ["lobby_id"]
             isOneToOne: false
+            referencedRelation: "auth_joined_lobby"
+            referencedColumns: ["lobby_id"]
+          },
+          {
+            foreignKeyName: "lobby_players_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
             referencedRelation: "lobbies"
             referencedColumns: ["id"]
           },
@@ -257,6 +271,13 @@ export type Database = {
       }
     }
     Views: {
+      auth_joined_lobby: {
+        Row: {
+          auth_uid: string | null
+          lobby_id: string | null
+        }
+        Relationships: []
+      }
       game_player_with_score: {
         Row: {
           game_id: number | null
