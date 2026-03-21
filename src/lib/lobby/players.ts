@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useEffect } from "react";
 import { atom } from "jotai";
 import { useConnectionSubscription } from "../socket-manager/new/hooks";
+import { PostgrestError } from "@supabase/supabase-js";
 
 // export const useRealtimePlayers = ({ lobbyId }: { lobbyId: LobbyId}) => {
 // 	const q = useQuery({
@@ -92,7 +93,7 @@ export const useLobbyPlayers = ({ lobbyId }: { lobbyId: LobbyId }) => {
 				.eq("lobby_id", lobbyId);
 
 			if (playerResponse.error) {
-				throw new Error(playerResponse.error.message);
+				throw playerResponse.error;
 			}
 			return playerResponse.data;
 		},
