@@ -1,7 +1,11 @@
 "use client";
 
 import { useGame, useGameCurrentPlayer } from "@/lib/game/game";
-import { useGamePlayers, useGamePlayersWithScore } from "@/lib/game/players";
+import {
+	useGamePlayers,
+	useGamePlayersWithScore,
+	useSelfPlayers,
+} from "@/lib/game/players";
 import { GameId } from "@/lib/type-aliases";
 import { cn } from "@/lib/utils";
 
@@ -11,11 +15,21 @@ type Props = {
 
 const GamePlayers = ({ gameId }: Props) => {
 	const { data: players } = useGamePlayers(gameId);
+	const { data: selfPlayers } = useSelfPlayers(gameId);
+
+	console.log("selfPlayers", selfPlayers);
 
 	return (
 		<div className="flex flex-wrap gap-8">
 			{players?.map((player) => (
-				<PlayerBox key={player.id} gameId={gameId} player={player} />
+				<PlayerBox
+					key={player.id}
+					gameId={gameId}
+					player={player}
+					isCurrent={selfPlayers?.some(
+						(selfPlayer) => selfPlayer.id === player.id,
+					)}
+				/>
 			))}
 		</div>
 	);
@@ -24,9 +38,11 @@ const GamePlayers = ({ gameId }: Props) => {
 const PlayerBox = ({
 	gameId,
 	player,
+	isCurrent,
 }: {
 	gameId: GameId;
 	player: { id: number; player_number: number };
+	isCurrent?: boolean;
 }) => {
 	const currentPlayer = useGameCurrentPlayer(gameId);
 	const { data: playersWithScore } = useGamePlayersWithScore(gameId);
@@ -54,7 +70,7 @@ const PlayerBox = ({
 				Score: {playerWithScore?.score} ({scorePercentage ?? "?"}%)
 			</span>
 			<span className="text-xs text-gray-500">
-				Player {player.player_number}
+				Player {player.player_number} {isCurrent && "(you)"}
 			</span>
 		</div>
 	);

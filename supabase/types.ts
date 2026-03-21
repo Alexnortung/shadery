@@ -119,6 +119,46 @@ export type Database = {
           },
         ]
       }
+      game_next_lobby: {
+        Row: {
+          created_at: string
+          game_id: number
+          lobby_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: number
+          lobby_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: number
+          lobby_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_next_lobby_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: true
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_next_lobby_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "auth_joined_lobby"
+            referencedColumns: ["lobby_id"]
+          },
+          {
+            foreignKeyName: "game_next_lobby_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "lobbies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_players: {
         Row: {
           game_id: number | null
@@ -343,6 +383,22 @@ export type Database = {
           position_y: number
         }[]
       }
+      game_get_player_by_game_id: {
+        Args: { the_auth_uid: string; the_game_id: number }
+        Returns: {
+          game_id: number | null
+          id: number
+          player_number: number
+          position_x: number
+          position_y: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "game_players"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       game_get_players_current_fields_ids: {
         Args: { player_id: number }
         Returns: number[]
@@ -388,6 +444,10 @@ export type Database = {
         Returns: undefined
       }
       get_user_lobby_ids: { Args: never; Returns: string[] }
+      get_user_lobby_ids_by_user: {
+        Args: { the_auth_uid: string }
+        Returns: string[]
+      }
       lobby_game_create_players: {
         Args: { the_lobby_id: string }
         Returns: number[]
@@ -398,6 +458,10 @@ export type Database = {
         Returns: undefined
       }
       user_create_lobby: { Args: never; Returns: string }
+      user_game_join_next_lobby: {
+        Args: { the_game_id: number }
+        Returns: string
+      }
       user_game_player_play: {
         Args: { the_game_id: number; value: number }
         Returns: undefined
