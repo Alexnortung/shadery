@@ -3,6 +3,7 @@
 import { LobbyId } from "@/lib/type-aliases";
 import JoinLobbyButton from "./JoinLobbyButton";
 import { useHasJoinedLobby } from "@/lib/lobby/join";
+import LobbyQrCode from "./LobbyQrCode";
 
 type Props = {
 	lobbyId: LobbyId;
@@ -22,6 +23,7 @@ const GameSettingsContainer = ({ lobbyId }: Props) => {
 	return (
 		<div>
 			<div>Nothing here yet</div>
+			<LobbyQrCode lobbyId={lobbyId} />
 		</div>
 	);
 };
