@@ -52,6 +52,13 @@ export type Database = {
             foreignKeyName: "auth_game_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: true
+            referencedRelation: "game_fields_with_owners"
+            referencedColumns: ["owner_player_id"]
+          },
+          {
+            foreignKeyName: "auth_game_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
             referencedRelation: "game_player_with_score"
             referencedColumns: ["id"]
           },
@@ -317,6 +324,26 @@ export type Database = {
           lobby_id: string | null
         }
         Relationships: []
+      }
+      game_fields_with_owners: {
+        Row: {
+          field_value: number | null
+          game_id: number | null
+          id: number | null
+          owner_player_id: number | null
+          owner_player_number: number | null
+          x: number | null
+          y: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_fields_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       game_player_with_score: {
         Row: {

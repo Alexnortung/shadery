@@ -19,8 +19,8 @@ const GameActions = ({ gameId }: Props) => {
 	const values = useGamePlayerValues(gameId);
 
 	return (
-		<div>
-			<div className="grid grid-cols-3">
+		<div className="sticky bottom-0 bg-background/70 backdrop-blur-xl p-4 relative z-10">
+			<div className="grid grid-cols-3 gap-2">
 				{playableValues.map((value) => (
 					<button
 						key={value}
@@ -29,7 +29,7 @@ const GameActions = ({ gameId }: Props) => {
 							!isSelfPlayersTurn || values.includes(value) || !!game?.ended_at
 						}
 						className={cn(
-							"btn btn-primary m-2 min-w-64 min-h-16 disabled:cursor-not-allowed disabled:opacity-30",
+							"btn btn-primary min-w-8 min-h-10 md:min-h-16 disabled:cursor-not-allowed disabled:opacity-30",
 							getColorClass(value),
 						)}
 						onClick={() => {

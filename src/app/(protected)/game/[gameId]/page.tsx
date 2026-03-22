@@ -21,10 +21,7 @@ export default async function Page({ params: paramsPromise }: Props) {
 
 	return (
 		<div>
-			Players:
-			<br />
 			<GamePlayers gameId={gameId} />
-			<br />
 			<EndGameModal gameId={gameId} />
 			<div className="w-full h-full flex justify-center items-center my-8">
 				<GameBoard gameId={gameId} />

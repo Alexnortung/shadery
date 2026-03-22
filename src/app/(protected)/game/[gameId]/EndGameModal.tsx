@@ -28,7 +28,7 @@ const EndGameModal = ({ gameId }: Props) => {
 	}
 
 	return (
-		<div className="absolute z-10 top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col justify-center items-center">
+		<div className="absolute z-10 top-0 left-0 w-full h-full bg-black/50 flex flex-col justify-center items-center">
 			<div className="bg-background p-8 rounded shadow-lg">
 				<h2 className="text-2xl font-bold mb-4">Game Over</h2>
 				<div className="mb-4">

@@ -12,6 +12,8 @@ import { getColorClass } from "./lib";
 import { useGameCurrentPlayer } from "@/lib/game/game";
 import { useGamePlayers, useSelfPlayers } from "@/lib/game/players";
 
+import "./game-board.css";
+
 type Props = {
 	gameId: GameId;
 };
@@ -19,6 +21,7 @@ type Props = {
 const GameBoard = ({ gameId }: Props) => {
 	const { data } = useGameBoard(gameId);
 	const { data: selfPlayers } = useSelfPlayers(gameId);
+	const currentPlayerNumber = useGameCurrentPlayer(gameId);
 
 	const minX =
 		data?.reduce((min, field) => Math.min(min, field.x), Infinity) ?? 0;
@@ -31,32 +34,39 @@ const GameBoard = ({ gameId }: Props) => {
 
 	return (
 		<div
-			className="grid"
+			className={cn("grid")}
 			style={{
-				gridTemplateRows: `repeat(${maxY - minY + 1}, 1.25rem)`,
-				gridTemplateColumns: `repeat(${maxX - minX + 1}, 1.25rem)`,
+				gridTemplateRows: `repeat(${maxY - minY + 1}, 1.25em)`,
+				gridTemplateColumns: `repeat(${maxX - minX + 1}, 1.25em)`,
+				fontSize: "min(1.2vh,2.6vw)",
 			}}
 		>
 			{data?.map((field) => {
-				const isCurrentPlayerField = selfPlayers?.some(
+				const isSelfPlayerField = selfPlayers?.some(
 					(player) =>
 						player.position_x === field.x && player.position_y === field.y,
 				);
+				const isCurrentPlayerField =
+					currentPlayerNumber !== undefined &&
+					field.owner_player_number === currentPlayerNumber;
 				return (
 					<div
 						key={field.id}
 						className={cn(
-							"field size-5",
+							"field size-full relative",
 							"flex items-center justify-center text-center",
-							isCurrentPlayerField && "relative",
+							"relative z-5",
+							// isCurrentPlayerField && "z-10 outline outline-yellow-500",
 							field.field_value !== null && getColorClass(field.field_value),
+							// isCurrentPlayerField && "animate-pulse",
+							isCurrentPlayerField && "game-board__field--active",
 						)}
 						style={{
 							gridRowStart: field.y - minY + 1,
 							gridColumnStart: field.x - minX + 1,
 						}}
 					>
-						{isCurrentPlayerField ? "•" : ""}
+						{isSelfPlayerField && "•"}
 						{/* {field.field_value} */}
 					</div>
 				);
