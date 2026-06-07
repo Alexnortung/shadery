@@ -2,9 +2,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LobbyId } from "../type-aliases";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect } from "react";
-import { atom } from "jotai";
-import { useConnectionSubscription } from "../socket-manager/new/hooks";
-import { PostgrestError } from "@supabase/supabase-js";
 
 // export const useRealtimePlayers = ({ lobbyId }: { lobbyId: LobbyId}) => {
 // 	const q = useQuery({
